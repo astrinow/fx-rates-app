@@ -64,7 +64,7 @@ internal class RatesListUiStateConverter {
             code = rate.code,
             name = rate.name,
             rate = NumberFormatter.formatRate(rate.rate),
-            change = change?.let { value -> NumberFormatter.formatSignedPercent(value.percent) },
+            change = change?.percent?.let(NumberFormatter::formatSignedPercent),
             trend = trend,
         )
     }

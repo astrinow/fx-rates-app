@@ -8,12 +8,12 @@ import kotlinx.datetime.LocalDate
  *
  * @property rate how many units of [code] one unit of the base currency buys.
  * @property previousRate the rate on the previous business day; `null` when the API has no
- * earlier quote in the requested window.
+ * earlier quote in the requested window or history is unavailable.
  */
 data class CurrencyRate(
     val code: String,
     val name: String,
     val date: LocalDate,
     val rate: BigDecimal,
-    val previousRate: BigDecimal?,
+    val previousRate: BigDecimal? = null,
 )

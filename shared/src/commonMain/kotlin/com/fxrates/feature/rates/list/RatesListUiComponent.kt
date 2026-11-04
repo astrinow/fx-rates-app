@@ -2,6 +2,7 @@ package com.fxrates.feature.rates.list
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.coroutines.coroutineScope
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.mvikotlin.extensions.coroutines.labels
 import com.arkivanov.mvikotlin.extensions.coroutines.states
 import com.fxrates.feature.rates.list.mvi.RatesListStore
@@ -68,6 +69,7 @@ internal class RatesListUiComponentDefault(
         .stateIn(scope, SharingStarted.Eagerly, RatesListUiState())
 
     init {
+        lifecycle.doOnDestroy(store::dispose)
         store.labels
             .onEach(::handleLabel)
             .launchIn(scope)
