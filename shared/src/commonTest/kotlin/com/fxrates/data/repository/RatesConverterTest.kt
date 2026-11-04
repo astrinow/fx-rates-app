@@ -57,6 +57,40 @@ class RatesConverterTest : FunSpec({
         rate.previousRate shouldBe null
     }
 
+    test("a weekend end date uses Friday and Thursday without inventing weekend quotes") {
+        val timeSeries = timeSeries(
+            startDate = "2026-10-25",
+            endDate = "2026-11-01",
+            rates = mapOf(
+                "2026-10-29" to mapOf("EUR" to "0.90"),
+                "2026-10-30" to mapOf("EUR" to "0.91"),
+            ),
+        )
+
+        val rate = converter.toLatestRates(timeSeries, currencies = emptyMap()).single()
+
+        rate.date shouldBe LocalDate(2026, 10, 30)
+        rate.rate shouldBe "0.91".toBigDecimal()
+        rate.previousRate shouldBe "0.90".toBigDecimal()
+    }
+
+    test("a holiday gap compares the last available quotes across the year boundary") {
+        val timeSeries = timeSeries(
+            startDate = "2025-12-25",
+            endDate = "2026-01-01",
+            rates = mapOf(
+                "2025-12-31" to mapOf("EUR" to "0.91"),
+                "2025-12-29" to mapOf("EUR" to "0.89"),
+                "2025-12-30" to mapOf("EUR" to "0.90"),
+            ),
+        )
+
+        val rate = converter.toLatestRates(timeSeries, currencies = emptyMap()).single()
+
+        rate.date shouldBe LocalDate(2025, 12, 31)
+        rate.previousRate shouldBe "0.90".toBigDecimal()
+    }
+
     test("the rates are sorted by code") {
         val timeSeries = timeSeries(
             base = "USD",

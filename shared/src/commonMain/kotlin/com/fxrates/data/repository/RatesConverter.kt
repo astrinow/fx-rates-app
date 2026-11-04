@@ -1,5 +1,6 @@
 package com.fxrates.data.repository
 
+import com.fxrates.data.remote.dto.LatestRatesDto
 import com.fxrates.data.remote.dto.TimeSeriesDto
 import com.fxrates.domain.model.CurrencyRate
 import com.fxrates.domain.model.CurrencyRateHistory
@@ -16,24 +17,19 @@ class RatesConverter {
 
     /**
      * Takes the last two dates of [timeSeries] as "latest" and "previous". A currency with no
-     * name in [currencies] is still shown, under its code.
+     * name in [currencies] is still shown, under its code. Uses actual quote dates, even when
+     * today's quote is unpublished or non-trading days leave gaps; missing days are not filled.
      */
     fun toLatestRates(timeSeries: TimeSeriesDto, currencies: Map<String, String>): List<CurrencyRate> {
         val datesDescending = timeSeries.rates.keys.sortedDescending()
         val latestDate = datesDescending.firstOrNull() ?: return emptyList()
         val latest = timeSeries.rates.getValue(latestDate)
         val previous = datesDescending.getOrNull(1)?.let(timeSeries.rates::getValue).orEmpty()
-        return latest
-            .map { (code, rate) ->
-                CurrencyRate(
-                    code = code,
-                    name = currencies[code] ?: code,
-                    date = LocalDate.parse(latestDate),
-                    rate = rate.toDecimal(),
-                    previousRate = previous[code]?.toDecimal(),
-                )
-            }
-            .sortedBy(CurrencyRate::code)
+        return toRates(date = latestDate, rates = latest, previous = previous, currencies = currencies)
+    }
+
+    fun toLatestRates(latest: LatestRatesDto, currencies: Map<String, String>): List<CurrencyRate> {
+        return toRates(date = latest.date, rates = latest.rates, previous = emptyMap(), currencies = currencies)
     }
 
     fun toRateHistory(
@@ -56,6 +52,24 @@ class RatesConverter {
             endDate = endDate,
             points = points,
         )
+    }
+
+    private fun toRates(
+        date: String,
+        rates: Map<String, JsonPrimitive>,
+        previous: Map<String, JsonPrimitive>,
+        currencies: Map<String, String>,
+    ): List<CurrencyRate> {
+        val quoteDate = LocalDate.parse(date)
+        return rates.map { (code, rate) ->
+            CurrencyRate(
+                code = code,
+                name = currencies[code] ?: code,
+                date = quoteDate,
+                rate = rate.toDecimal(),
+                previousRate = previous[code]?.toDecimal(),
+            )
+        }.sortedBy(CurrencyRate::code)
     }
 
     private fun JsonPrimitive.toDecimal(): BigDecimal {

@@ -1,5 +1,6 @@
 package com.fxrates.data.remote
 
+import com.fxrates.data.remote.dto.LatestRatesDto
 import com.fxrates.data.remote.dto.TimeSeriesDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -16,6 +17,10 @@ class FrankfurterApi(
 
     /** Currency code → English name. */
     suspend fun getCurrencies(): Map<String, String> = httpClient.get("currencies").body()
+
+    suspend fun getLatest(base: String): LatestRatesDto = httpClient.get("latest") {
+        parameter("base", base)
+    }.body()
 
     /**
      * The rates for every business day from [start] to [end] inclusive; `null` [end] means

@@ -65,6 +65,23 @@ class RatesListUiStateConverterTest : FunSpec({
         item.trend shouldBe Trend.Up
     }
 
+    test("fallback quotes remain visible without a change or trend calculation") {
+        val state = RatesListStore.State(
+            base = "USD",
+            rates = Resource.Data(listOf(currencyRate(rate = "0.91", previousRate = null))),
+        )
+
+        val uiState = converter.createUiState(state)
+        val item = uiState.content.shouldBeInstanceOf<Content.Items>().items.single()
+
+        uiState.subtitle shouldBe "1 USD · 2026-11-02"
+        uiState.isRefreshEnabled shouldBe true
+        item.code shouldBe "EUR"
+        item.rate shouldBe "0.9100"
+        item.change shouldBe null
+        item.trend shouldBe Trend.Flat
+    }
+
     test("the query filters by code and by name, ignoring case") {
         val byCode = converter.createUiState(state(query = "jp")).content.shouldBeInstanceOf<Content.Items>()
         val byName = converter.createUiState(state(query = "swiss")).content.shouldBeInstanceOf<Content.Items>()
