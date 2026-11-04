@@ -2,7 +2,7 @@
 
 ## 1. Actually Used Tools and Models
 
-- AI Models & Assistants: Codex / LLM for iterative code generation, refactoring, and test creation.
+- **AI Models & Agents**: Codex Desktop (CLI `0.166.0-alpha.6`) utilizing OpenAI `gpt-6.1-sol` for iterative implementation and refactoring; OpenAI `gpt-6-astra` for final system verification, architectural audit, and acceptance criteria validation; and OpenAI `codex-auto-review` (Guardian subagent) for automated command security reviews.
 - IDE & Development: Android Studio for code navigation, inspections, and Git diff review.
 - CLI & Diagnostics: `curl` for low-level HTTP/Cloudflare origin probing; `adb logcat` for capturing Ktor network exceptions and runtime lifecycle events.
 - Build & Quality: Gradle CLI, Kotlin Multiplatform compiler, Kotest, Detekt.
