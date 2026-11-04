@@ -2,9 +2,13 @@ package com.fxrates.data.repository
 
 import com.fxrates.data.remote.dto.TimeSeriesDto
 import com.fxrates.domain.model.CurrencyRate
+import com.fxrates.domain.model.CurrencyRateHistory
+import com.fxrates.domain.model.RateHistoryPoint
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import me.tatarka.inject.annotations.Inject
 
 @Inject
@@ -32,8 +36,31 @@ class RatesConverter {
             .sortedBy(CurrencyRate::code)
     }
 
-    // Going through the string keeps the decimal digits the API sent: 0.89158 stays 0.89158
-    // instead of the nearest binary double.
-    private fun Double.toDecimal(): BigDecimal = toString().toBigDecimal()
+    fun toRateHistory(
+        timeSeries: TimeSeriesDto,
+        base: String,
+        code: String,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): CurrencyRateHistory {
+        val points = timeSeries.rates.mapNotNull { (date, rates) ->
+            val rate = rates[code] ?: return@mapNotNull null
+            val quoteDate = LocalDate.parse(date)
+            if (quoteDate !in startDate..endDate) return@mapNotNull null
+            RateHistoryPoint(date = quoteDate, rate = rate.toDecimal())
+        }.sortedBy(RateHistoryPoint::date)
+        return CurrencyRateHistory(
+            base = base,
+            code = code,
+            startDate = startDate,
+            endDate = endDate,
+            points = points,
+        )
+    }
+
+    private fun JsonPrimitive.toDecimal(): BigDecimal {
+        require(!isString && this != JsonNull) { "Expected a numeric rate" }
+        return content.toBigDecimal()
+    }
 
 }
