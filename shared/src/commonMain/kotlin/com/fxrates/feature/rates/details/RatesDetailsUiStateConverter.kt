@@ -7,6 +7,7 @@ import com.fxrates.core.utils.Resource
 import com.fxrates.domain.model.CurrencyRateHistory
 import com.fxrates.feature.rates.details.RatesDetailsUiState.Content
 import com.fxrates.feature.rates.details.model.RateHistoryItem
+import com.fxrates.feature.rates.details.model.RateHistoryTrend
 import com.fxrates.feature.rates.details.mvi.RatesDetailsStore
 import com.fxrates.ui.Strings
 import me.tatarka.inject.annotations.Inject
@@ -29,7 +30,7 @@ internal class RatesDetailsUiStateConverter {
             }
         }
         return RatesDetailsUiState(
-            title = state.code,
+            title = Strings.currencyPair(base = state.base, code = state.code),
             subtitle = subtitle,
             isRetryEnabled = history !is Resource.Loading,
             content = createContent(history),
@@ -56,12 +57,20 @@ internal class RatesDetailsUiStateConverter {
         } else {
             null
         }
+        val trend = when {
+            change == null || change.absolute.isZero() -> RateHistoryTrend.Flat
+            change.absolute.isPositive -> RateHistoryTrend.Up
+            else -> RateHistoryTrend.Down
+        }
         return Content.Items(
             items = points.asReversed().map { point ->
                 RateHistoryItem(date = point.date.toString(), rate = NumberFormatter.formatRate(point.rate))
             },
+            currentRate = NumberFormatter.formatRate(points.last().rate),
+            currentDate = points.last().date.toString(),
             absoluteChange = change?.absolute?.let(NumberFormatter::formatSignedRate) ?: Strings.UNAVAILABLE_VALUE,
             percentChange = change?.percent?.let(NumberFormatter::formatSignedPercent) ?: Strings.UNAVAILABLE_VALUE,
+            trend = trend,
         )
     }
 

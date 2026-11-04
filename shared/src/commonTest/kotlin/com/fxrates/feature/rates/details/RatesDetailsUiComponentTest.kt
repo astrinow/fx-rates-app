@@ -57,7 +57,7 @@ class RatesDetailsUiComponentTest : FunSpec({
                 runCurrent()
 
                 component.state.value.content shouldBe RatesDetailsUiState.Content.Empty
-                component.state.value.title shouldBe "EUR"
+                component.state.value.title shouldBe "USD / EUR"
                 component.onBack()
                 runCurrent()
                 backCount shouldBe 1

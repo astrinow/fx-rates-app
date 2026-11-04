@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
+import com.fxrates.feature.rates.details.RatesDetailsUiContent
 import com.fxrates.feature.rates.list.RatesListUiContent
 import com.fxrates.ui.theme.AppTheme
 
@@ -20,6 +21,7 @@ fun RootUiContent(
     ) { child ->
         when (val instance = child.instance) {
             is RootUiComponent.Child.RatesList -> RatesListUiContent(component = instance.component)
+            is RootUiComponent.Child.RatesDetails -> RatesDetailsUiContent(component = instance.component)
         }
     }
 }

@@ -7,3 +7,11 @@ data class RateHistoryItem(
     val date: String,
     val rate: String,
 )
+
+enum class RateHistoryTrend {
+
+    Up,
+    Down,
+    Flat,
+
+}

@@ -4,7 +4,11 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
+import com.fxrates.feature.rates.details.RatesDetailsUiComponent
+import com.fxrates.feature.rates.details.RatesDetailsUiComponentDefault
 import com.fxrates.feature.rates.list.RatesListUiComponent
 import com.fxrates.feature.rates.list.RatesListUiComponentDefault
 import kotlinx.serialization.Serializable
@@ -20,6 +24,8 @@ abstract class RootUiComponent {
 
         class RatesList(val component: RatesListUiComponent) : Child()
 
+        class RatesDetails(val component: RatesDetailsUiComponent) : Child()
+
     }
 
 }
@@ -28,6 +34,7 @@ abstract class RootUiComponent {
 internal class RootUiComponentDefault(
     @Assisted componentContext: ComponentContext,
     private val ratesListFactory: RatesListUiComponentDefault.Factory,
+    private val ratesDetailsFactory: RatesDetailsUiComponentDefault.Factory,
 ) : RootUiComponent(), ComponentContext by componentContext {
 
     @AssistedFactory
@@ -57,12 +64,30 @@ internal class RootUiComponentDefault(
                 ),
             )
         }
+        is Config.RatesDetails -> {
+            Child.RatesDetails(
+                ratesDetailsFactory.create(
+                    componentContext = componentContext,
+                    base = config.base,
+                    code = config.code,
+                    callbacks = RatesDetailsCallbacks(),
+                ),
+            )
+        }
     }
 
     private inner class RatesListCallbacks : RatesListUiComponentDefault.Callbacks {
 
         override fun onOpenCurrency(base: String, code: String) {
-            // The currency screen does not exist yet.
+            navigation.pushNew(Config.RatesDetails(base = base, code = code))
+        }
+
+    }
+
+    private inner class RatesDetailsCallbacks : RatesDetailsUiComponentDefault.Callbacks {
+
+        override fun onBack() {
+            navigation.pop()
         }
 
     }
@@ -72,6 +97,9 @@ internal class RootUiComponentDefault(
 
         @Serializable
         data object RatesList : Config()
+
+        @Serializable
+        data class RatesDetails(val base: String, val code: String) : Config()
 
     }
 

@@ -66,7 +66,7 @@ internal class RatesDetailsUiComponentDefault(
     override val state: StateFlow<RatesDetailsUiState> = store.states
         .map(uiStateConverter::createUiState)
         .flowOn(computationDispatcher)
-        .stateIn(scope, SharingStarted.Eagerly, RatesDetailsUiState())
+        .stateIn(scope, SharingStarted.Eagerly, uiStateConverter.createUiState(store.state))
 
     init {
         lifecycle.doOnDestroy(store::dispose)

@@ -3,6 +3,7 @@ package com.fxrates.feature.rates.details
 import androidx.compose.runtime.Immutable
 import com.fxrates.core.utils.Empty
 import com.fxrates.feature.rates.details.model.RateHistoryItem
+import com.fxrates.feature.rates.details.model.RateHistoryTrend
 
 @Immutable
 internal data class RatesDetailsUiState(
@@ -23,8 +24,11 @@ internal data class RatesDetailsUiState(
 
         data class Items(
             val items: List<RateHistoryItem>,
+            val currentRate: String,
+            val currentDate: String,
             val absoluteChange: String,
             val percentChange: String,
+            val trend: RateHistoryTrend,
         ) : Content()
 
     }

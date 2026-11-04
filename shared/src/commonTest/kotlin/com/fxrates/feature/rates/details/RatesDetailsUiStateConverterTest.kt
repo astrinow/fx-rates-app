@@ -6,6 +6,7 @@ import com.fxrates.domain.model.CurrencyRateHistory
 import com.fxrates.domain.model.RateHistoryPoint
 import com.fxrates.feature.rates.details.RatesDetailsUiState.Content
 import com.fxrates.feature.rates.details.model.RateHistoryItem
+import com.fxrates.feature.rates.details.model.RateHistoryTrend
 import com.fxrates.feature.rates.details.mvi.RatesDetailsStore
 import com.fxrates.testing.rateHistory
 import com.fxrates.ui.Strings
@@ -36,7 +37,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
         val uiState = converter.createUiState(state(rateHistory()))
 
         uiState.content shouldBe Content.Empty
-        uiState.title shouldBe "EUR"
+        uiState.title shouldBe "USD / EUR"
         uiState.subtitle shouldBe "1 USD · 2026-10-06 — 2026-11-04"
         uiState.isRetryEnabled shouldBe true
     }
@@ -49,6 +50,9 @@ class RatesDetailsUiStateConverterTest : FunSpec({
         val content = converter.createUiState(state(history)).content.shouldBeInstanceOf<Content.Items>()
 
         content.items shouldBe listOf(RateHistoryItem(date = "2026-11-02", rate = "0.8916"))
+        content.currentRate shouldBe "0.8916"
+        content.currentDate shouldBe "2026-11-02"
+        content.trend shouldBe RateHistoryTrend.Flat
         content.absoluteChange shouldBe Strings.UNAVAILABLE_VALUE
         content.percentChange shouldBe Strings.UNAVAILABLE_VALUE
     }
@@ -58,6 +62,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
 
         content.absoluteChange shouldBe "+1.0000"
         content.percentChange shouldBe "+50.00%"
+        content.trend shouldBe RateHistoryTrend.Up
     }
 
     test("a decrease has negative absolute and percentage changes") {
@@ -65,6 +70,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
 
         content.absoluteChange shouldBe "-1.0000"
         content.percentChange shouldBe "-25.00%"
+        content.trend shouldBe RateHistoryTrend.Down
     }
 
     test("equal rates have zero change without a plus sign") {
@@ -72,6 +78,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
 
         content.absoluteChange shouldBe "0.0000"
         content.percentChange shouldBe "0.00%"
+        content.trend shouldBe RateHistoryTrend.Flat
     }
 
     test("a zero initial rate preserves absolute change and leaves percentage unavailable") {
@@ -79,6 +86,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
 
         content.absoluteChange shouldBe "+3.0000"
         content.percentChange shouldBe Strings.UNAVAILABLE_VALUE
+        content.trend shouldBe RateHistoryTrend.Up
     }
 
     test("two zero rates have zero absolute change and no percentage") {
@@ -114,6 +122,8 @@ class RatesDetailsUiStateConverterTest : FunSpec({
         )
         content.absoluteChange shouldBe "+1.0000"
         content.percentChange shouldBe "+50.00%"
+        content.currentRate shouldBe "3.0000"
+        content.currentDate shouldBe "2026-11-03"
         history.points.first().date shouldBe LocalDate(2026, 10, 30)
     }
 
@@ -121,7 +131,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
         val uiState = converter.createUiState(RatesDetailsStore.State(base = "USD", code = "EUR"))
 
         uiState.content shouldBe Content.Loading
-        uiState.title shouldBe "EUR"
+        uiState.title shouldBe "USD / EUR"
         uiState.subtitle shouldBe String.Empty
         uiState.isRetryEnabled shouldBe false
     }
@@ -136,6 +146,7 @@ class RatesDetailsUiStateConverterTest : FunSpec({
         val uiState = converter.createUiState(state)
 
         uiState.content shouldBe Content.Error
+        uiState.title shouldBe "USD / EUR"
         uiState.subtitle shouldBe String.Empty
         uiState.isRetryEnabled shouldBe true
     }
