@@ -82,8 +82,8 @@ class RatesDetailsUiComponentTest : FunSpec({
             }
             RatesDetailsUiComponentDefault(
                 componentContext = DefaultComponentContext(lifecycle),
-                base = "GBP",
-                code = "JPY",
+                base = ALTERNATE_BASE,
+                code = ALTERNATE_CODE,
                 callbacks = object : RatesDetailsUiComponentDefault.Callbacks {
                     override fun onBack() = Unit
                 },
@@ -93,7 +93,7 @@ class RatesDetailsUiComponentTest : FunSpec({
             )
             try {
                 runCurrent()
-                repository.requestedPairs shouldBe listOf("GBP" to "JPY")
+                repository.requestedPairs shouldBe listOf(ALTERNATE_BASE to ALTERNATE_CODE)
             } finally {
                 lifecycle.destroy()
             }
@@ -103,4 +103,13 @@ class RatesDetailsUiComponentTest : FunSpec({
         }
     }
 
-})
+}) {
+
+    private companion object {
+
+        const val ALTERNATE_BASE = "GBP"
+        const val ALTERNATE_CODE = "JPY"
+
+    }
+
+}

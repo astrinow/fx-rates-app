@@ -55,16 +55,16 @@ class RootUiComponentTest : FunSpec({
                 val list = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
 
-                list.component.onCurrencyClick("JPY")
+                list.component.onCurrencyClick(TARGET_CURRENCY)
                 runCurrent()
 
                 val stack = fixture.root.stack.value
                 stack.active.configuration shouldBe
-                    RootUiComponentDefault.Config.RatesDetails(base = "USD", code = "JPY")
+                    RootUiComponentDefault.Config.RatesDetails(base = BASE_CURRENCY, code = TARGET_CURRENCY)
                 stack.backStack.single().instance shouldBe list
                 val details = stack.active.instance.shouldBeInstanceOf<RootUiComponent.Child.RatesDetails>().component
-                details.state.value.title shouldBe "USD / JPY"
-                fixture.repository.requestedPairs shouldBe listOf("USD" to "JPY")
+                details.state.value.title shouldBe EXPECTED_PAIR
+                fixture.repository.requestedPairs shouldBe listOf(BASE_CURRENCY to TARGET_CURRENCY)
             }
         }
     }
@@ -75,10 +75,10 @@ class RootUiComponentTest : FunSpec({
                 runCurrent()
                 val list = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
-                list.component.onQueryChange("jp")
+                list.component.onQueryChange(SEARCH_QUERY)
                 runCurrent()
                 val stateBeforeOpening = list.component.state.value
-                list.component.onCurrencyClick("JPY")
+                list.component.onCurrencyClick(TARGET_CURRENCY)
                 runCurrent()
                 fixture.repository.latestRates = Result.failure(IllegalStateException("must not reload"))
                 val details = fixture.root.stack.value.active.instance
@@ -90,10 +90,10 @@ class RootUiComponentTest : FunSpec({
                 fixture.root.stack.value.active.instance shouldBe list
                 fixture.root.stack.value.backStack shouldBe emptyList()
                 list.component.state.value shouldBe stateBeforeOpening
-                list.component.state.value.query shouldBe "jp"
+                list.component.state.value.query shouldBe SEARCH_QUERY
                 val content = list.component.state.value.content.shouldBeInstanceOf<RatesListUiState.Content.Items>()
-                content.items.single().code shouldBe "JPY"
-                fixture.repository.requestedBases shouldBe listOf("USD")
+                content.items.single().code shouldBe TARGET_CURRENCY
+                fixture.repository.requestedBases shouldBe listOf(BASE_CURRENCY)
             }
         }
     }
@@ -104,7 +104,7 @@ class RootUiComponentTest : FunSpec({
                 runCurrent()
                 val list = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
-                list.component.onCurrencyClick("EUR")
+                list.component.onCurrencyClick(OTHER_CURRENCY)
                 runCurrent()
 
                 fixture.backDispatcher.back() shouldBe true
@@ -123,11 +123,11 @@ class RootUiComponentTest : FunSpec({
                 val list = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
 
-                repeat(2) { _ -> list.component.onCurrencyClick("EUR") }
+                repeat(2) { _ -> list.component.onCurrencyClick(OTHER_CURRENCY) }
                 runCurrent()
 
                 fixture.root.stack.value.backStack.size shouldBe 1
-                fixture.repository.requestedPairs shouldBe listOf("USD" to "EUR")
+                fixture.repository.requestedPairs shouldBe listOf(BASE_CURRENCY to OTHER_CURRENCY)
             }
         }
     }
@@ -146,7 +146,7 @@ class RootUiComponentTest : FunSpec({
                 runCurrent()
                 val list = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
-                list.component.onCurrencyClick("EUR")
+                list.component.onCurrencyClick(OTHER_CURRENCY)
                 runCurrent()
                 val details = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesDetails>().component
@@ -167,7 +167,7 @@ class RootUiComponentTest : FunSpec({
                 runCurrent()
                 val list = fixture.root.stack.value.active.instance
                     .shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
-                list.component.onCurrencyClick("JPY")
+                list.component.onCurrencyClick(TARGET_CURRENCY)
                 runCurrent()
                 fixture.stateKeeper.save()
             }
@@ -177,16 +177,28 @@ class RootUiComponentTest : FunSpec({
 
                 val stack = fixture.root.stack.value
                 stack.active.configuration shouldBe
-                    RootUiComponentDefault.Config.RatesDetails(base = "USD", code = "JPY")
+                    RootUiComponentDefault.Config.RatesDetails(base = BASE_CURRENCY, code = TARGET_CURRENCY)
                 stack.active.instance.shouldBeInstanceOf<RootUiComponent.Child.RatesDetails>()
-                    .component.state.value.title shouldBe "USD / JPY"
+                    .component.state.value.title shouldBe EXPECTED_PAIR
                 stack.backStack.single().instance.shouldBeInstanceOf<RootUiComponent.Child.RatesList>()
-                fixture.repository.requestedPairs shouldBe listOf("USD" to "JPY")
+                fixture.repository.requestedPairs shouldBe listOf(BASE_CURRENCY to TARGET_CURRENCY)
             }
         }
     }
 
-})
+}) {
+
+    internal companion object {
+
+        const val TARGET_CURRENCY = "JPY"
+        const val BASE_CURRENCY = "USD"
+        const val EXPECTED_PAIR = "USD / JPY"
+        const val SEARCH_QUERY = "jp"
+        const val OTHER_CURRENCY = "EUR"
+
+    }
+
+}
 
 private class NavigationFixture(
     dispatcher: CoroutineDispatcher,
@@ -198,7 +210,9 @@ private class NavigationFixture(
     val backDispatcher = BackDispatcher()
 
     val repository = FakeRatesRepository().apply {
-        latestRates = Result.success(listOf(currencyRate(), currencyRate(code = "JPY", name = "Japanese Yen")))
+        latestRates = Result.success(
+            listOf(currencyRate(), currencyRate(code = RootUiComponentTest.TARGET_CURRENCY, name = "Japanese Yen")),
+        )
         rateHistory = Result.success(rateHistory())
     }
 

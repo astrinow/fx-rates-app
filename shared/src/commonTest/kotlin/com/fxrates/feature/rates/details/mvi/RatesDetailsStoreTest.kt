@@ -29,7 +29,7 @@ import kotlinx.coroutines.test.setMain
 class RatesDetailsStoreTest : FunSpec({
 
     val testDispatcher = StandardTestDispatcher()
-    val history = rateHistory().copy(base = "GBP", code = "JPY")
+    val history = rateHistory().copy(base = BASE_CURRENCY, code = QUOTE_CURRENCY)
 
     beforeSpec {
         isAssertOnMainThreadEnabled = false
@@ -43,7 +43,7 @@ class RatesDetailsStoreTest : FunSpec({
 
     fun createStore(repository: FakeRatesRepository): RatesDetailsStore {
         val factory = RatesDetailsStoreFactory(DefaultStoreFactory(), ratesRepository = repository)
-        return factory.createStore(base = "GBP", code = "JPY")
+        return factory.createStore(base = BASE_CURRENCY, code = QUOTE_CURRENCY)
     }
 
     test("the bootstrapper loads history for the supplied currency pair without an intent") {
@@ -54,10 +54,10 @@ class RatesDetailsStoreTest : FunSpec({
                 store.state.history shouldBe Resource.Loading
                 runCurrent()
 
-                repository.requestedPairs shouldBe listOf("GBP" to "JPY")
+                repository.requestedPairs shouldBe listOf(BASE_CURRENCY to QUOTE_CURRENCY)
                 repository.requestedBases shouldBe emptyList()
-                store.state.base shouldBe "GBP"
-                store.state.code shouldBe "JPY"
+                store.state.base shouldBe BASE_CURRENCY
+                store.state.code shouldBe QUOTE_CURRENCY
                 store.state.history shouldBe Resource.Data(history)
             } finally {
                 store.dispose()
@@ -93,7 +93,7 @@ class RatesDetailsStoreTest : FunSpec({
     test("a failed load emits loading followed by the original error") {
         runTest(testDispatcher) {
             val gate = CompletableDeferred<Unit>()
-            val failure = IllegalStateException("offline")
+            val failure = IllegalStateException(OFFLINE_MESSAGE)
             val repository = FakeRatesRepository().apply {
                 rateHistory = Result.failure(failure)
                 beforeHistoryLoad = { gate.await() }
@@ -116,7 +116,7 @@ class RatesDetailsStoreTest : FunSpec({
     test("retry preserves both parameters and ignores repeated intents before and during the load") {
         runTest(testDispatcher) {
             val repository = FakeRatesRepository().apply {
-                rateHistory = Result.failure(IllegalStateException("offline"))
+                rateHistory = Result.failure(IllegalStateException(OFFLINE_MESSAGE))
             }
             val store = createStore(repository)
             try {
@@ -131,7 +131,10 @@ class RatesDetailsStoreTest : FunSpec({
                 store.state.history shouldBe Resource.Loading
                 repeat(3) { _ -> store.accept(RatesDetailsStore.Intent.OnRetry) }
                 runCurrent()
-                repository.requestedPairs shouldBe listOf("GBP" to "JPY", "GBP" to "JPY")
+                repository.requestedPairs shouldBe listOf(
+                    BASE_CURRENCY to QUOTE_CURRENCY,
+                    BASE_CURRENCY to QUOTE_CURRENCY,
+                )
 
                 gate.complete(Unit)
                 runCurrent()
@@ -157,7 +160,7 @@ class RatesDetailsStoreTest : FunSpec({
                 store.accept(RatesDetailsStore.Intent.OnRetry)
                 runCurrent()
 
-                repository.requestedPairs shouldBe listOf("GBP" to "JPY")
+                repository.requestedPairs shouldBe listOf(BASE_CURRENCY to QUOTE_CURRENCY)
 
                 gate.complete(Unit)
                 runCurrent()
@@ -177,7 +180,10 @@ class RatesDetailsStoreTest : FunSpec({
                 store.accept(RatesDetailsStore.Intent.OnRetry)
                 runCurrent()
 
-                repository.requestedPairs shouldBe listOf("GBP" to "JPY", "GBP" to "JPY")
+                repository.requestedPairs shouldBe listOf(
+                    BASE_CURRENCY to QUOTE_CURRENCY,
+                    BASE_CURRENCY to QUOTE_CURRENCY,
+                )
                 store.state.history shouldBe Resource.Data(history)
             } finally {
                 store.dispose()
@@ -217,7 +223,7 @@ class RatesDetailsStoreTest : FunSpec({
             val store = createStore(repository)
             try {
                 runCurrent()
-                repository.requestedPairs shouldBe listOf("GBP" to "JPY")
+                repository.requestedPairs shouldBe listOf(BASE_CURRENCY to QUOTE_CURRENCY)
             } finally {
                 store.dispose()
             }
@@ -228,4 +234,14 @@ class RatesDetailsStoreTest : FunSpec({
         }
     }
 
-})
+}) {
+
+    private companion object {
+
+        const val BASE_CURRENCY = "GBP"
+        const val QUOTE_CURRENCY = "JPY"
+        const val OFFLINE_MESSAGE = "offline"
+
+    }
+
+}
